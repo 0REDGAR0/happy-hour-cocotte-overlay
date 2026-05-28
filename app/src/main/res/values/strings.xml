@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">Cocotte Overlay Prototype</string>
+    <string name="main_description">Ce prototype permet de tester l\'affichage d\'un overlay Happy Hour par-dessus d\'autres applications.</string>
+    <string name="btn_authorize">Autoriser overlay</string>
+    <string name="btn_show">Démarrer overlay automatique</string>
+    <string name="btn_hide">Arrêter overlay</string>
+    <string name="btn_kill">Kill overlay DeX (Fail-safe)</string>
+    <string name="btn_open_dex">Mode fenêtre DeX expérimental</string>
+    <string name="overlay_pos_label">Position de l\'overlay :</string>
+    <string name="pos_top_left">Sous score / haut gauche</string>
+    <string name="pos_right_panel">Panneau droit</string>
+    <string name="btn_save_config">Enregistrer configuration</string>
+    <string name="hint_server_url">URL Serveur Cocotte</string>
+    <string name="config_saved">Configuration enregistrée</string>
+    <string name="mode_auto_label">Mode Automatique (Recommandé)</string>
+    <string name="status_label">État actuel : </string>
+    <string name="status_active">Overlay actif</string>
+    <string name="status_inactive">Overlay inactif</string>
+
+    <!-- Overlay Content -->
+    <string name="happy_hour_title">HAPPY HOUR EN COURS</string>
+    <string name="happy_hour_subtitle">-20 % sur une sélection</string>
+    <string name="bar_service_only">Service au bar uniquement</string>
+    <string name="waiting_status">En attente</string>
+    <string name="finished_status">Happy hour terminée</string>
+    <string name="timer_default">10:00</string>
+    <string name="close">X</string>
+
+    <!-- Drinks -->
+    <string name="drink_1">Pinte blonde</string>
+    <string name="drink_1_old">7.00 €</string>
+    <string name="drink_1_new">5.60 €</string>
+
+    <string name="drink_2">Pinte IPA</string>
+    <string name="drink_2_old">8.00 €</string>
+    <string name="drink_2_new">6.40 €</string>
+
+    <string name="drink_3">Verre de vin</string>
+    <string name="drink_3_old">5.00 €</string>
+    <string name="drink_3_new">4.00 €</string>
+
+    <string name="drink_4">Cocktail maison</string>
+    <string name="drink_4_old">9.00 €</string>
+    <string name="drink_4_new">7.20 €</string>
+
+    <string name="drink_5">Soft</string>
+    <string name="drink_5_old">3.50 €</string>
+    <string name="drink_5_new">2.80 €</string>
+    <string name="diagnostics_label">Écrans détectés : %1$d | Externe : %2$s</string>
+    <string name="yes">OUI</string>
+    <string name="no">NON</string>
+</resources>

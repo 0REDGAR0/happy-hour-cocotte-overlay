@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Cocotte Palette -->
+    <color name="cocotte_bg_warm">#f8f3ea</color>
+    <color name="cocotte_surface">#fffaf4</color>
+    <color name="cocotte_text_main">#2f241b</color>
+    <color name="cocotte_text_secondary">#6d5b4b</color>
+    <color name="cocotte_accent_main">#af593f</color>
+    <color name="cocotte_accent_festive">#e0b24b</color>
+    <color name="cocotte_mocha">#5c3a21</color>
+
+    <!-- Legacy/Other -->
+    <color name="terracotta">#af593f</color>
+    <color name="terracotta_translucent">#CCAF593F</color>
+</resources>
