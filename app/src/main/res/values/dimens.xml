@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PRE_MATCH Layout Guidelines & Positioning -->
+
+    <!-- Guideline percentages (0.0 to 1.0) -->
+    <item name="pre_match_guideline_center_v" format="float" type="dimen">0.54</item>
+    <item name="pre_match_guideline_vs_h" format="float" type="dimen">0.25</item>
+    <item name="pre_match_guideline_kickoff_h" format="float" type="dimen">0.58</item>
+
+    <!-- Spotify / Music positioning -->
+    <dimen name="pre_match_music_margin_start">170dp</dimen>
+    <dimen name="pre_match_music_margin_bottom">55dp</dimen>
+    <dimen name="pre_match_music_width">350dp</dimen>
+    <dimen name="pre_match_music_title_size">20sp</dimen>
+    <dimen name="pre_match_music_artist_size">15sp</dimen>
+
+    <!-- Timer positioning -->
+    <dimen name="pre_match_timer_margin_top">70dp</dimen>
+    <dimen name="pre_match_timer_margin_start">120dp</dimen>
+    <dimen name="pre_match_timer_text_size">70sp</dimen>
+
+    <!-- Team names -->
+    <dimen name="pre_match_team_text_size">56sp</dimen>
+    <dimen name="pre_match_team_width">500dp</dimen>
+    <dimen name="pre_match_team_top_margin_top">100dp</dimen>
+    <dimen name="pre_match_team_bottom_margin_top">60dp</dimen>
+    <dimen name="pre_match_team_margin_start">10dp</dimen>
+
+    <!-- Program section -->
+    <dimen name="pre_match_program_margin_top">110dp</dimen>
+    <dimen name="pre_match_program_margin_end">45dp</dimen>
+    <dimen name="pre_match_program_width">500dp</dimen>
+    <dimen name="pre_match_program_text_size">22sp</dimen>
+
+    <!-- Drinks section -->
+    <dimen name="pre_match_drinks_margin_top">605dp</dimen>
+    <dimen name="pre_match_drinks_margin_end">45dp</dimen>
+    <dimen name="pre_match_drinks_width">500dp</dimen>
+    <dimen name="pre_match_drinks_text_size">23sp</dimen>
+</resources>
