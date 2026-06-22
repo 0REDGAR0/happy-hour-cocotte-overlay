@@ -1,6 +1,7 @@
 package com.cocotte.overlayprototype
 
 import org.json.JSONObject
+import android.util.Log
 
 enum class DisplayMode {
     IDLE,
@@ -33,12 +34,16 @@ data class Drink(
     val name: String,
     val price: Double,
     val happyHourPrice: Double? = null,
-    val icon: String? = null
+    val icon: String? = null,
+    val active: Boolean = true,
+    val currency: String? = "€"
 )
 
 data class ProgramItem(
-    val icon: String,
-    val text: String
+    val icon: String?,
+    val text: String,
+    val active: Boolean = true,
+    val sortOrder: Int = 0
 )
 
 data class PreMatch(
@@ -69,7 +74,9 @@ data class CocotteState(
     val awayTeam: Team?,
     val matchInfo: MatchInfo?,
     val happyHourActive: Boolean,
+    val happyHourDurationSeconds: Int,
     val remainingSeconds: Int,
+    val happyHourEndsAt: String?,
     val fullscreenMessage: String? = null,
     val bannerMessage: String? = null,
     val spotify: SpotifyState? = null,
@@ -77,6 +84,8 @@ data class CocotteState(
     val drinks: List<Drink> = emptyList()
 ) {
     companion object {
+        private const val TAG = "CocotteState"
+
         fun fromJson(json: JSONObject): CocotteState {
             val modeStr = json.optString("displayMode", "IDLE")
             val mode = try {
@@ -96,6 +105,7 @@ data class CocotteState(
             val matchInfoJson = json.optJSONObject("matchInfo")
             val preMatchJson = json.optJSONObject("preMatch")
             val spotifyJson = json.optJSONObject("spotify")
+            val menuJson = json.optJSONObject("menu")
             
             val programItems = mutableListOf<ProgramItem>()
             preMatchJson?.optJSONArray("programItems")?.let { arr ->
@@ -103,23 +113,28 @@ data class CocotteState(
                     val item = arr.optJSONObject(i)
                     if (item != null) {
                         programItems.add(ProgramItem(
-                            item.optString("icon", ""),
-                            item.optString("text", "")
+                            icon = item.optString("icon", "").takeIf { it.isNotBlank() && it != "null" },
+                            text = item.optString("text", ""),
+                            active = item.optBoolean("active", true),
+                            sortOrder = item.optInt("sortOrder", 0)
                         ))
                     }
                 }
             }
             
             val drinks = mutableListOf<Drink>()
-            json.optJSONArray("drinks")?.let { arr ->
+            val drinksArray = json.optJSONArray("drinks") ?: menuJson?.optJSONArray("drinks")
+            drinksArray?.let { arr ->
                 for (i in 0 until arr.length()) {
                     val drinkJson = arr.optJSONObject(i)
                     if (drinkJson != null) {
                         drinks.add(Drink(
-                            drinkJson.optString("name", ""),
-                            drinkJson.optDouble("price", 0.0),
-                            if (drinkJson.has("happyHourPrice")) drinkJson.optDouble("happyHourPrice") else null,
-                            drinkJson.optString("icon", "").takeIf { it != "" && it != "null" }
+                            name = drinkJson.optString("name", ""),
+                            price = drinkJson.optDouble("price", 0.0),
+                            happyHourPrice = if (drinkJson.has("happyHourPrice")) drinkJson.optDouble("happyHourPrice") else null,
+                            icon = drinkJson.optString("icon", "").takeIf { it.isNotBlank() && it != "null" },
+                            active = drinkJson.optBoolean("active", true),
+                            currency = drinkJson.optString("currency", "€")
                         ))
                     }
                 }
@@ -160,7 +175,9 @@ data class CocotteState(
                     )
                 },
                 happyHourActive = json.optBoolean("happyHourActive", false),
+                happyHourDurationSeconds = json.optInt("happyHourDurationSeconds", 300),
                 remainingSeconds = json.optInt("remainingSeconds", 0),
+                happyHourEndsAt = if (json.has("happyHourEndsAt")) json.optString("happyHourEndsAt") else null,
                 fullscreenMessage = json.optString("fullscreenMessage", "").takeIf { it != "" && it != "null" },
                 bannerMessage = json.optString("bannerMessage", "").takeIf { it != "" && it != "null" },
                 spotify = spotifyState,
