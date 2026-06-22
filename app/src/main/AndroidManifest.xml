@@ -37,6 +37,7 @@
             android:exported="false"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+            android:theme="@style/Theme.CocotteTV"
             android:label="Cocotte TV Display" />
     </application>
 

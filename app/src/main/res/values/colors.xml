@@ -3,7 +3,22 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- Cocotte Palette -->
+    <!-- Cocotte V2 Palette - Refined for premium look -->
+    <color name="cocotte_orange">#E67E22</color>
+    <color name="cocotte_deep_black">#0A0A0A</color>
+    <color name="cocotte_champagne">#F7E7CE</color>
+    <color name="cocotte_beige">#F5F5DC</color>
+
+    <color name="terracotta">#B03A2E</color>
+    <color name="spotify_green">#1DB954</color>
+
+    <!-- Pre-Match specific colors -->
+    <color name="pre_match_timer">#B43820</color>
+    <color name="pre_match_cream">#EEC9A9</color>
+    <color name="pre_match_dark_text">#121212</color>
+    <color name="pre_match_happy_hour">#C8553B</color>
+
+    <!-- Legacy / Missing -->
     <color name="cocotte_bg_warm">#f8f3ea</color>
     <color name="cocotte_surface">#fffaf4</color>
     <color name="cocotte_text_main">#2f241b</color>
@@ -12,7 +27,8 @@
     <color name="cocotte_accent_festive">#e0b24b</color>
     <color name="cocotte_mocha">#5c3a21</color>
 
-    <!-- Legacy/Other -->
-    <color name="terracotta">#af593f</color>
-    <color name="terracotta_translucent">#CCAF593F</color>
+    <!-- Overlays -->
+    <color name="overlay_semi_transparent_black">#000000</color> <!-- ~70% opacity -->
+    <color name="overlay_semi_transparent">#EF0A0A0A</color>
+    <color name="overlay_transparent">#00000000</color>
 </resources>
