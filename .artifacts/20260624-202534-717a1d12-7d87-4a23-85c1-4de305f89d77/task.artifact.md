@@ -1,0 +1,34 @@
+# Task Management
+
+- [x] V4 Adaptation
+	- [x] Research and Planning
+	- [x] Data Model Updates
+	- [x] UI Layout Updates
+	- [x] Overlay Logic Updates
+	- [x] Verification
+- [x] Alignment Audit & Corrections
+	- [x] Inspect layouts for gravity/centering issues
+	- [x] Fix `activity_dex_display.xml` centering
+	- [x] Fix `overlay_pre_match.xml` centering
+	- [x] Refine `OverlayService.kt` text formatting
+	- [x] Final Build & Verification
+- [x] Visual Debug Mode & Precision Alignments V4
+	- [x] Implement switchable debug bounds (Magenta borders)
+	- [x] PRE_MATCH: Center Timer, Program, and Drink Card
+	- [x] HALF_TIME / FULL_TIME: Set France (Right-aligned) and Opponent (Left-aligned)
+	- [x] GLOBAL: Force Left-alignment for Spotify/Music
+	- [x] Verify Centering of all large cards
+	- [x] Final Build & Verification
+- [x] Final Soundbox Implementation
+	- [x] Update `SoundboxEvent` model with `expiresAt`
+	- [x] Implement `SoundPool` infrastructure for short effects
+	- [x] Implement `handleSoundboxEvent` with deduplication and expiration check
+	- [x] Add discreet visual feedback (tvSoundFeedback)
+	- [x] Map types (`horn`, `whistle`, `cheer`, `goal`) to resources
+	- [x] Final Build & Verification
+- [x] Layout Restoration & Internal Alignment
+	- [x] Restore PRE_MATCH blocks to their original right-aligned positions
+	- [x] Ensure internal text centering for all blocks
+	- [x] Restore HALF_TIME drink card to its right-aligned position
+	- [x] Verify debug mode functionality and comments
+	- [x] Final Build & Verification

@@ -110,6 +110,7 @@
             android:layout_width="@dimen/half_time_drinks_width"
             android:layout_height="@dimen/half_time_drinks_height"
             android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="@dimen/half_time_drinks_margin_top"
@@ -120,6 +121,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chargement..."
+                android:gravity="center"
                 android:textColor="@color/pre_match_dark_text"
                 android:textSize="@dimen/half_time_drinks_text_size"
                 android:fontFamily="monospace"
@@ -246,18 +248,59 @@
         android:visibility="gone">
         <TextView
             android:id="@+id/tvMessageText"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:padding="40dp"
+            android:padding="60dp"
             android:text="MESSAGE"
             android:textColor="@color/white"
-            android:textSize="48sp"
+            android:textSize="56sp"
             android:textStyle="bold"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- V4: HAPPY HOUR ANNOUNCEMENT (5s Temporary) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layer_hh_announcement"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#DD000000"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_hh_announcement"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="60dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HAPPY HOUR"
+                android:textColor="@color/white"
+                android:textSize="@dimen/hh_announcement_title_size"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHHAnnouncementMsg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:text="La pinte est à 4€ au lieu de 9€"
+                android:textColor="@color/cocotte_beige"
+                android:textSize="@dimen/hh_announcement_msg_size"
+                android:textStyle="italic" />
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 6. HAPPY HOUR BANNER (Bottom Overlap) -->
@@ -343,18 +386,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_panel_dark"
-            android:padding="16dp"
+            android:padding="20dp"
+            android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="100dp">
+            android:layout_marginTop="80dp">
             <TextView
                 android:id="@+id/tvBannerText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="ANNONCE"
                 android:textColor="@color/white"
-                android:textSize="20sp" />
+                android:textSize="24sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -382,6 +428,22 @@
         android:text="OVERLAY ACTIF"
         android:textColor="@color/white"
         android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- 9. SOUNDBOX FEEDBACK (Discreet toast) -->
+    <TextView
+        android:id="@+id/tvSoundFeedback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_panel_dark"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:text="SON"
+        android:textColor="@color/white"
+        android:textSize="14sp"
         android:textStyle="bold"
         android:visibility="gone" />
 

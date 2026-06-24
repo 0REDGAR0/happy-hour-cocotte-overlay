@@ -8,14 +8,21 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
 import android.hardware.display.DisplayManager
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.SoundPool
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.style.AlignmentSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.view.Display
 import android.view.Gravity
@@ -46,6 +53,7 @@ class OverlayService : Service() {
         var isRunning = false
         private const val SHOW_MATCH_LIVE_DEBUG_BADGE = false // Set to true to verify overlay is active in MATCH_LIVE
         private const val FORCE_OVERLAY_DEBUG_VISIBLE = false // Set to true to always show debug "OVERLAY ACTIF" panel
+        private const val SHOW_TEXT_DEBUG_BOUNDS = false // Task: Toggle for visual debug of bounds
     }
 
     private enum class ConnectionStatus { GREEN, ORANGE, RED }
@@ -64,6 +72,18 @@ class OverlayService : Service() {
     private var isViewAdded = false
     private var isAnimating = false
     private var lastApiSuccessTime: Long = 0
+
+    // Soundbox
+    private var soundPool: SoundPool? = null
+    private val soundMap = mutableMapOf<String, Int>()
+    private var tvSoundFeedback: TextView? = null
+
+    // V4 Tracking
+    private var lastHHAnnouncementId: String? = null
+    private var lastSoundboxEventId: String? = null
+    private var lastTargetVolumePercent: Int = -1
+    private var currentFadeVolumePercent: Double = -1.0
+    private var isHHAnnouncementActive = false
     
     // UI Layers
     private var mainContainer: View? = null
@@ -73,6 +93,7 @@ class OverlayService : Service() {
     private var layerMatchLive: View? = null
     private var layerHappyHour: View? = null // This is the banner
     private var layerMessage: View? = null
+    private var layerHHAnnouncement: View? = null // V4 Full-screen
     private var layerBanner: View? = null
     private var layerError: View? = null
     
@@ -102,6 +123,7 @@ class OverlayService : Service() {
         val prefs = getSharedPreferences("cocotte_prefs", MODE_PRIVATE)
         serverUrl = prefs.getString("server_url", "http://10.0.2.2:3000") ?: "http://10.0.2.2:3000"
         
+        initSoundPool()
         setupWindowManagerForExternalDisplay()
         
         Log.d(TAG, "Starting polling...")
@@ -154,10 +176,40 @@ class OverlayService : Service() {
             layerMatchLive = view.findViewById(R.id.layer_match_live)
             layerHappyHour = view.findViewById(R.id.layer_happy_hour)
             layerMessage = view.findViewById(R.id.layer_message)
+            layerHHAnnouncement = view.findViewById(R.id.layer_hh_announcement)
             layerBanner = view.findViewById(R.id.layer_banner)
             layerError = view.findViewById(R.id.layer_error)
+            tvSoundFeedback = view.findViewById(R.id.tvSoundFeedback)
+            
+            if (SHOW_TEXT_DEBUG_BOUNDS) {
+                applyAllDebugBounds(view)
+            }
         }
         return view!!
+    }
+
+    private fun applyAllDebugBounds(root: View) {
+        val viewsToDebug = listOf(
+            R.id.tvHomeTeamName, R.id.tvAwayTeamName, R.id.tvKickoffTimer, 
+            R.id.containerSpotify, R.id.containerProgram, R.id.containerDrinks,
+            R.id.tvHalfHomeScore, R.id.tvHalfAwayScore, R.id.tvHalfHomeTeamName, R.id.tvHalfAwayTeamName,
+            R.id.tvFullHomeScore, R.id.tvFullAwayScore, R.id.tvFullHomeTeamName, R.id.tvFullAwayTeamName,
+            R.id.layer_message, R.id.tvMessageText, R.id.layer_hh_announcement,
+            R.id.layer_happy_hour, R.id.layer_banner, R.id.tvBannerText,
+            R.id.containerHalfTimeDrinks
+        )
+        
+        viewsToDebug.forEach { id ->
+            root.findViewById<View>(id)?.let { applyDebugBorder(it) }
+        }
+    }
+
+    private fun applyDebugBorder(v: View) {
+        val border = GradientDrawable().apply {
+            setStroke(2, Color.MAGENTA)
+            setColor(0x33FF00FF) // Light magenta tint
+        }
+        v.background = border
     }
 
     private fun addViewToWindow() {
@@ -242,6 +294,19 @@ class OverlayService : Service() {
 
         val view = fullScreenOverlayView ?: return
 
+        // --- V4 Logic ---
+
+        // 1. Volume Management (Fade)
+        updateMediaVolumeForMode(state.mode)
+
+        // 2. Happy Hour Announcement (5s full-screen)
+        handleHHAnnouncement(view, state.happyHourAnnouncement)
+
+        // 3. Soundbox Events
+        handleSoundboxEvent(state.soundboxEvent)
+
+        // --- End V4 Logic ---
+
         // Always update Debug Panel visibility
         val debugPanel = view.findViewById<View>(R.id.tvForceDebugPanel)
         debugPanel?.isVisible = FORCE_OVERLAY_DEBUG_VISIBLE
@@ -252,11 +317,18 @@ class OverlayService : Service() {
         }
 
         // Handle transitions for main display modes
-        val modeToDisplay = if (state.mode == DisplayMode.HAPPY_HOUR) lastMainDisplayMode else state.mode
+        val modeToDisplay = when {
+            state.fullscreenMessage != null -> DisplayMode.FULLSCREEN_MESSAGE
+            isHHAnnouncementActive -> currentState?.mode ?: lastMainDisplayMode
+            state.mode == DisplayMode.HAPPY_HOUR -> lastMainDisplayMode
+            else -> state.mode
+        }
         
-        if (modeToDisplay != currentState?.mode || state.mode == DisplayMode.HAPPY_HOUR) {
-            Log.d(TAG, "Main mode transition: ${currentState?.mode} -> $modeToDisplay (Actual mode: ${state.mode})")
-            transitionToMode(modeToDisplay)
+        if (modeToDisplay != currentState?.mode || state.mode == DisplayMode.HAPPY_HOUR || isHHAnnouncementActive) {
+            Log.d(TAG, "Main mode transition: ${currentState?.mode} -> $modeToDisplay (Actual mode: ${state.mode}, HH_Active: $isHHAnnouncementActive)")
+            if (!isHHAnnouncementActive || modeToDisplay == DisplayMode.FULLSCREEN_MESSAGE) {
+                transitionToMode(modeToDisplay)
+            }
         }
 
         // Always update Happy Hour Banner independently
@@ -282,6 +354,171 @@ class OverlayService : Service() {
         currentState = state
     }
 
+    private fun handleHHAnnouncement(view: View, announcement: HappyHourAnnouncement?) {
+        if (announcement == null) return
+        
+        if (announcement.id != lastHHAnnouncementId) {
+            lastHHAnnouncementId = announcement.id
+            Log.d(TAG, "New Happy Hour Announcement triggered: ${announcement.id}")
+            
+            val tvMsg = view.findViewById<TextView>(R.id.tvHHAnnouncementMsg)
+            tvMsg.text = announcement.message ?: announcement.offer ?: "La pinte est à 4€ au lieu de 9€"
+            
+            isHHAnnouncementActive = true
+            showWithAnimation(layerHHAnnouncement!!)
+            
+            mainHandler.postDelayed({
+                hideWithAnimation(layerHHAnnouncement!!)
+                isHHAnnouncementActive = false
+                // Trigger UI refresh to restore mode
+                currentState?.let { updateUI(it) }
+            }, 5000)
+        }
+    }
+
+    private fun handleSoundboxEvent(event: SoundboxEvent?) {
+        if (event == null) return
+        if (event.id != lastSoundboxEventId) {
+            lastSoundboxEventId = event.id
+            Log.d(TAG, "Soundbox Event received: id=${event.id}, type=${event.type}, asset=${event.asset}")
+            
+            // 1. Check expiration
+            if (isEventExpired(event.expiresAt)) {
+                Log.w(TAG, "Soundbox event ${event.id} expired, skipping.")
+                return
+            }
+
+            // 2. Play Sound
+            val soundId = soundMap[event.type]
+            if (soundId != null && soundId != 0) {
+                soundPool?.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f)
+                Log.i(TAG, "PLAYING SOUND: ${event.type} (id=$soundId)")
+            } else {
+                Log.e(TAG, "Sound resource missing for type: ${event.type}")
+            }
+
+            // 3. Visual Feedback
+            showSoundFeedback(event.type)
+        }
+    }
+
+    private fun isEventExpired(expiresAt: String?): Boolean {
+        if (expiresAt == null) return false
+        return try {
+            val sdf = if (expiresAt.contains(".")) {
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+            } else {
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+            }
+            val expiry = sdf.parse(expiresAt)
+            expiry != null && expiry.before(Date())
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun showSoundFeedback(type: String) {
+        val label = when (type) {
+            "horn" -> "KLAXON"
+            "whistle" -> "SIFFLET"
+            "cheer" -> "AMBIANCE"
+            "goal" -> "BUT !!!"
+            else -> type.uppercase()
+        }
+        
+        tvSoundFeedback?.let { tv ->
+            tv.text = label
+            tv.isVisible = true
+            tv.alpha = 0f
+            tv.animate().alpha(1f).setDuration(300).withEndAction {
+                mainHandler.postDelayed({
+                    tv.animate().alpha(0f).setDuration(500).withEndAction { tv.isGone = true }.start()
+                }, 2000)
+            }.start()
+        }
+    }
+
+    private fun initSoundPool() {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(5)
+            .setAudioAttributes(audioAttributes)
+            .build()
+        
+        // Map types to raw resources
+        loadSound("horn", "soundbox_horn")
+        loadSound("whistle", "soundbox_whistle")
+        loadSound("cheer", "soundbox_cheer")
+        loadSound("goal", "soundbox_goal")
+    }
+
+    private fun loadSound(type: String, resourceName: String) {
+        val resId = resources.getIdentifier(resourceName, "raw", packageName)
+        if (resId != 0) {
+            val soundId = soundPool?.load(this, resId, 1) ?: 0
+            soundMap[type] = soundId
+            Log.d(TAG, "Sound loaded: $type -> $resourceName (resId=$resId, soundId=$soundId)")
+        } else {
+            Log.w(TAG, "Sound resource not found: $resourceName")
+        }
+    }
+
+    private fun updateMediaVolumeForMode(mode: DisplayMode) {
+        val targetPercent = when (mode) {
+            DisplayMode.MATCH_LIVE -> 100
+            DisplayMode.PRE_MATCH, DisplayMode.HALF_TIME, DisplayMode.FULL_TIME -> 40
+            else -> return // Keep current for IDLE/HAPPY_HOUR
+        }
+
+        if (targetPercent == lastTargetVolumePercent) return
+        
+        lastTargetVolumePercent = targetPercent
+        startVolumeFade(targetPercent)
+    }
+
+    private fun startVolumeFade(targetPercent: Int) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        
+        if (currentFadeVolumePercent < 0) {
+            val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            currentFadeVolumePercent = (currentVol.toDouble() / maxVolume) * 100
+        }
+
+        Log.d(TAG, "Starting volume fade: ${currentFadeVolumePercent.toInt()}% -> $targetPercent%")
+
+        val fadeRunnable = object : Runnable {
+            override fun run() {
+                val diff = targetPercent - currentFadeVolumePercent
+                if (Math.abs(diff) < 2) {
+                    currentFadeVolumePercent = targetPercent.toDouble()
+                    applyVolume(audioManager, maxVolume, targetPercent)
+                    Log.d(TAG, "Volume fade complete: $targetPercent%")
+                    return
+                }
+
+                val step = if (diff > 0) 2.0 else -2.0
+                currentFadeVolumePercent += step
+                applyVolume(audioManager, maxVolume, currentFadeVolumePercent.toInt())
+                mainHandler.postDelayed(this, 100)
+            }
+        }
+        mainHandler.post(fadeRunnable)
+    }
+
+    private fun applyVolume(am: AudioManager, max: Int, percent: Int) {
+        val volume = (percent.toDouble() / 100.0 * max).toInt()
+        try {
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set volume: ${e.message}")
+        }
+    }
+
     private fun updateMatchLiveUI(view: View, state: CocotteState) {
         // Match Live is discreet, scoreboard removed as requested
         Log.d(TAG, "MATCH_LIVE actif : overlay volontairement transparent/discret")
@@ -303,9 +540,13 @@ class OverlayService : Service() {
         
         tvHomeScore.text = matchInfo?.homeScore?.toString() ?: "0"
         tvAwayScore.text = matchInfo?.awayScore?.toString() ?: "0"
+        tvHomeScore.gravity = Gravity.CENTER
+        tvAwayScore.gravity = Gravity.CENTER
         
         tvHomeTeamName.text = homeName.uppercase()
         tvAwayTeamName.text = awayName.uppercase()
+        tvHomeTeamName.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        tvAwayTeamName.gravity = Gravity.START or Gravity.CENTER_VERTICAL
 
         updateHalfTimeDrinks(tvDrinks, state)
         
@@ -327,9 +568,13 @@ class OverlayService : Service() {
         
         tvHomeScore.text = matchInfo?.homeScore?.toString() ?: "0"
         tvAwayScore.text = matchInfo?.awayScore?.toString() ?: "0"
+        tvHomeScore.gravity = Gravity.CENTER
+        tvAwayScore.gravity = Gravity.CENTER
         
         tvHomeTeamName.text = homeName.uppercase()
         tvAwayTeamName.text = awayName.uppercase()
+        tvHomeTeamName.gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        tvAwayTeamName.gravity = Gravity.START or Gravity.CENTER_VERTICAL
 
         // Spotify
         val tvTrack = view.findViewById<TextView>(R.id.tvFullSpotifyTrack)
@@ -338,6 +583,8 @@ class OverlayService : Service() {
     }
 
     private fun updateMatchSpotify(tvTrack: TextView, tvArtist: TextView, spotify: SpotifyState?) {
+        tvTrack.gravity = Gravity.START
+        tvArtist.gravity = Gravity.START
         if (spotify == null || spotify.status == "not_configured" || spotify.status == "no_playback") {
             tvTrack.text = "Musique indisponible"
             tvArtist.text = "-"
@@ -350,42 +597,45 @@ class OverlayService : Service() {
 
     private fun updateHalfTimeDrinks(tvDrinks: TextView, state: CocotteState) {
         val drinks = state.drinks.filter { it.active }
-        if (drinks.isNotEmpty()) {
-            val spannableBuilder = SpannableStringBuilder()
-            val hhColor = ContextCompat.getColor(this, R.color.pre_match_happy_hour)
-            
-            spannableBuilder.append("Boisson         Normal   Happy Hour\n")
-            spannableBuilder.append("-----------------------------------\n")
-            
-            drinks.take(6).forEach { drink ->
-                val iconPrefix = if (!drink.icon.isNullOrBlank()) "${drink.icon} " else ""
-                val nameWithIcon = iconPrefix + drink.name
-                val name = if (nameWithIcon.length > 15) nameWithIcon.take(13) + ".." else nameWithIcon.padEnd(15)
-                val price = String.format(Locale.getDefault(), "%.1f%s", drink.price, drink.currency ?: "€").padStart(6)
-                
-                spannableBuilder.append(name)
-                spannableBuilder.append("  ")
-                spannableBuilder.append(price)
-                
-                if (drink.happyHourPrice != null) {
-                    val hhPrice = String.format(Locale.getDefault(), "%.1f%s", drink.happyHourPrice, drink.currency ?: "€").padStart(11)
-                    val startHH = spannableBuilder.length
-                    spannableBuilder.append(hhPrice)
-                    spannableBuilder.setSpan(
-                        ForegroundColorSpan(hhColor),
-                        startHH,
-                        spannableBuilder.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                } else {
-                    spannableBuilder.append("          -")
-                }
-                spannableBuilder.append("\n")
-            }
-            tvDrinks.text = spannableBuilder
-        } else {
-            tvDrinks.text = "Carte indisponible"
+        if (drinks.isEmpty()) {
+            tvDrinks.text = "Offre Happy Hour indisponible"
+            tvDrinks.gravity = Gravity.CENTER
+            return
         }
+
+        // V4: Single offer display (Refined for centring)
+        val drink = drinks[0]
+        tvDrinks.gravity = Gravity.CENTER
+        tvDrinks.text = formatSingleDrinkOffer(drink)
+    }
+
+    private fun formatSingleDrinkOffer(drink: Drink): SpannableStringBuilder {
+        val spannableBuilder = SpannableStringBuilder()
+        
+        // 1. Name
+        val name = drink.name.uppercase() + "\n"
+        val startName = spannableBuilder.length
+        spannableBuilder.append(name)
+        spannableBuilder.setSpan(AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), startName, spannableBuilder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        
+        // 2. Price
+        val price = String.format(Locale.getDefault(), "%.0f%s", drink.happyHourPrice ?: drink.price, drink.currency ?: "€")
+        val priceLine = price + "\n"
+        val startPrice = spannableBuilder.length
+        spannableBuilder.append(priceLine)
+        spannableBuilder.setSpan(RelativeSizeSpan(2.5f), startPrice, spannableBuilder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableBuilder.setSpan(ForegroundColorSpan(ContextCompat.getColor(this, R.color.terracotta)), startPrice, spannableBuilder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableBuilder.setSpan(AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), startPrice, spannableBuilder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        
+        // 3. Comparison
+        if (drink.happyHourPrice != null) {
+            val compare = "au lieu de ${drink.price.toInt()}${drink.currency ?: "€"}"
+            val startCompare = spannableBuilder.length
+            spannableBuilder.append(compare)
+            spannableBuilder.setSpan(AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER), startCompare, spannableBuilder.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        
+        return spannableBuilder
     }
 
     private fun updateHappyHourBanner(view: View, state: CocotteState) {
@@ -429,7 +679,8 @@ class OverlayService : Service() {
                 tvTimer.text = "Happy Hour active"
             }
             
-            tvBarOnly.text = "Prix réduits pendant 5 minutes !"
+            // V4 simplified banner text
+            tvBarOnly.text = "Pinte à 4€ au lieu de 9€"
             
         } else {
             if (layer.isVisible) {
@@ -580,6 +831,7 @@ class OverlayService : Service() {
         
         // 4. Program Items
         val tvProgram = view.findViewById<TextView>(R.id.tvProgramList)
+        tvProgram.gravity = Gravity.CENTER_HORIZONTAL
         val programItems = state.preMatch?.programItems?.filter { it.active }?.sortedBy { it.sortOrder } ?: emptyList()
         if (programItems.isNotEmpty()) {
             val sb = StringBuilder()
@@ -594,43 +846,8 @@ class OverlayService : Service() {
         
         // 5. Drinks
         val tvDrinks = view.findViewById<TextView>(R.id.tvDrinkCard)
-        val drinks = state.drinks.filter { it.active }
-        if (drinks.isNotEmpty()) {
-            val spannableBuilder = SpannableStringBuilder()
-            val hhColor = ContextCompat.getColor(this, R.color.pre_match_happy_hour)
-            
-            spannableBuilder.append("Boisson         Normal   Happy Hour\n")
-            spannableBuilder.append("-----------------------------------\n")
-            
-            drinks.take(6).forEach { drink ->
-                val iconPrefix = if (!drink.icon.isNullOrBlank()) "${drink.icon} " else ""
-                val nameWithIcon = iconPrefix + drink.name
-                val name = if (nameWithIcon.length > 15) nameWithIcon.take(13) + ".." else nameWithIcon.padEnd(15)
-                val price = String.format(Locale.getDefault(), "%.1f%s", drink.price, drink.currency ?: "€").padStart(6)
-                
-                spannableBuilder.append(name)
-                spannableBuilder.append("  ")
-                spannableBuilder.append(price)
-                
-                if (drink.happyHourPrice != null) {
-                    val hhPrice = String.format(Locale.getDefault(), "%.1f%s", drink.happyHourPrice, drink.currency ?: "€").padStart(11)
-                    val startHH = spannableBuilder.length
-                    spannableBuilder.append(hhPrice)
-                    spannableBuilder.setSpan(
-                        ForegroundColorSpan(hhColor),
-                        startHH,
-                        spannableBuilder.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                } else {
-                    spannableBuilder.append("          -")
-                }
-                spannableBuilder.append("\n")
-            }
-            tvDrinks.text = spannableBuilder
-        } else {
-            tvDrinks.text = "Carte indisponible"
-        }
+        tvDrinks.gravity = Gravity.CENTER
+        updateHalfTimeDrinks(tvDrinks, state) // Reuse V4 logic
     }
 
     private fun loadAlbumArt(imageView: ImageView, url: String) {

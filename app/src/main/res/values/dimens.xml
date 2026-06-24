@@ -8,7 +8,7 @@
     <item name="pre_match_guideline_kickoff_h" format="float" type="dimen">0.58</item>
 
     <!-- Spotify / Music positioning -->
-    <dimen name="pre_match_music_margin_start">210dp</dimen>
+    <dimen name="pre_match_music_margin_start">170dp</dimen>
     <dimen name="pre_match_music_margin_bottom">50dp</dimen>
     <dimen name="pre_match_music_width">350dp</dimen>
     <dimen name="pre_match_music_title_size">20sp</dimen>
@@ -16,27 +16,27 @@
 
     <!-- Timer positioning -->
     <dimen name="pre_match_timer_margin_top">70dp</dimen>
-    <dimen name="pre_match_timer_margin_start">120dp</dimen>
+    <dimen name="pre_match_timer_margin_start">125dp</dimen>
     <dimen name="pre_match_timer_text_size">70sp</dimen>
 
     <!-- Team names -->
     <dimen name="pre_match_team_text_size">56sp</dimen>
     <dimen name="pre_match_team_width">500dp</dimen>
     <dimen name="pre_match_team_top_margin_top">100dp</dimen>
-    <dimen name="pre_match_team_bottom_margin_top">60dp</dimen>
-    <dimen name="pre_match_team_margin_start">10dp</dimen>
+    <dimen name="pre_match_team_bottom_margin_top">55dp</dimen>
+    <dimen name="pre_match_team_margin_start">150dp</dimen>
 
     <!-- Program section -->
     <dimen name="pre_match_program_margin_top">110dp</dimen>
-    <dimen name="pre_match_program_margin_end">45dp</dimen>
+    <dimen name="pre_match_program_margin_end">50dp</dimen>
     <dimen name="pre_match_program_width">500dp</dimen>
-    <dimen name="pre_match_program_text_size">22sp</dimen>
+    <dimen name="pre_match_program_text_size">50sp</dimen>
 
     <!-- Drinks section -->
-    <dimen name="pre_match_drinks_margin_top">560dp</dimen>
-    <dimen name="pre_match_drinks_margin_end">75dp</dimen>
+    <dimen name="pre_match_drinks_margin_top">600dp</dimen>
+    <dimen name="pre_match_drinks_margin_end">50dp</dimen>
     <dimen name="pre_match_drinks_width">500dp</dimen>
-    <dimen name="pre_match_drinks_text_size">23sp</dimen>
+    <dimen name="pre_match_drinks_text_size">30sp</dimen>
 
     <!-- Match Live / Scoreboard -->
     <dimen name="match_live_banner_height">60dp</dimen>
@@ -63,8 +63,8 @@
     <dimen name="half_time_score_text_size">175sp</dimen>
 
     <dimen name="half_time_team_names_margin_top">350dp</dimen>
-    <dimen name="half_time_team_names_margin_start">660dp</dimen>
-    <dimen name="half_time_team_names_width">1300dp</dimen>
+    <dimen name="half_time_team_names_margin_start">500dp</dimen>
+    <dimen name="half_time_team_names_width">1350dp</dimen>
     <dimen name="half_time_team_names_text_size">42sp</dimen>
 
     <!-- NEW: Independent positions for HALF_TIME team names -->
@@ -76,11 +76,11 @@
     <dimen name="half_time_away_team_name_margin_start">1405dp</dimen>
     <dimen name="half_time_away_team_name_width">300dp</dimen>
 
-    <dimen name="half_time_drinks_margin_top">570dp</dimen>
-    <dimen name="half_time_drinks_margin_end">75dp</dimen>
-    <dimen name="half_time_drinks_width">500dp</dimen>
-    <dimen name="half_time_drinks_height">400dp</dimen>
-    <dimen name="half_time_drinks_text_size">23sp</dimen>
+    <dimen name="half_time_drinks_margin_top">600dp</dimen>
+    <dimen name="half_time_drinks_margin_end">50dp</dimen>
+    <dimen name="half_time_drinks_width">490dp</dimen>
+    <dimen name="half_time_drinks_height">300dp</dimen>
+    <dimen name="half_time_drinks_text_size">30sp</dimen>
 
     <!-- FULL_TIME Positioning -->
     <dimen name="full_time_score_home_margin_top">195dp</dimen>
@@ -104,7 +104,14 @@
     <dimen name="full_time_away_team_name_width">300dp</dimen>
 
     <!-- Spotify in Half/Full Time -->
-    <dimen name="match_fullscreen_music_margin_start">210dp</dimen>
+    <dimen name="match_fullscreen_music_margin_start">170dp</dimen>
     <dimen name="match_fullscreen_music_margin_bottom">50dp</dimen>
     <dimen name="match_fullscreen_music_width">350dp</dimen>
+
+    <!-- V4 Additions -->
+    <dimen name="hh_announcement_title_size">90sp</dimen>
+    <dimen name="hh_announcement_msg_size">48sp</dimen>
+    <dimen name="single_drink_title_size">40sp</dimen>
+    <dimen name="single_drink_price_size">100sp</dimen>
+    <dimen name="single_drink_old_price_size">32sp</dimen>
 </resources>

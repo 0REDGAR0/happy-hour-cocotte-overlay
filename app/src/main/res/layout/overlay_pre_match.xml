@@ -35,11 +35,11 @@
             android:textColor="@color/pre_match_cream"
             android:textSize="@dimen/pre_match_team_text_size"
             android:textStyle="bold"
+            android:textAllCaps="true"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guidelineCenterVertical"
             app:layout_constraintEnd_toEndOf="@+id/guidelineCenterVertical"
-            android:layout_marginTop="@dimen/pre_match_team_top_margin_top"
-            android:layout_marginStart="@dimen/pre_match_team_margin_start" />
+            android:layout_marginTop="@dimen/pre_match_team_top_margin_top" />
 
         <TextView
             android:id="@+id/tvAwayTeamName"
@@ -50,11 +50,11 @@
             android:textColor="@color/pre_match_cream"
             android:textSize="@dimen/pre_match_team_text_size"
             android:textStyle="bold"
+            android:textAllCaps="true"
             app:layout_constraintTop_toBottomOf="@+id/guidelineVS"
             app:layout_constraintStart_toStartOf="@+id/guidelineCenterVertical"
             app:layout_constraintEnd_toEndOf="@+id/guidelineCenterVertical"
-            android:layout_marginTop="@dimen/pre_match_team_bottom_margin_top"
-            android:layout_marginStart="@dimen/pre_match_team_margin_start" />
+            android:layout_marginTop="@dimen/pre_match_team_bottom_margin_top" />
 
         <!-- TIMER : Compteur avant coup d'envoi -->
         <!-- TIMER : le point de départ horizontal est contrôlé par guidelineTimerStart. -->
@@ -64,6 +64,8 @@
             android:id="@+id/tvKickoffTimer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAlignment="center"
             android:text="00:00:00"
             android:textColor="@color/pre_match_timer"
             android:textSize="@dimen/pre_match_timer_text_size"
@@ -112,6 +114,7 @@
             android:layout_width="@dimen/pre_match_program_width"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="@dimen/pre_match_program_margin_top"
@@ -122,6 +125,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chargement..."
+                android:gravity="center"
                 android:textColor="@color/pre_match_cream"
                 android:textSize="@dimen/pre_match_program_text_size"
                 android:lineSpacingExtra="10dp" />
@@ -134,6 +138,7 @@
             android:layout_width="@dimen/pre_match_drinks_width"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="@dimen/pre_match_drinks_margin_top"
@@ -144,6 +149,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chargement..."
+                android:gravity="center"
                 android:textColor="@color/pre_match_dark_text"
                 android:textSize="@dimen/pre_match_drinks_text_size"
                 android:fontFamily="monospace"
@@ -156,7 +162,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.54" />
+            app:layout_constraintGuide_percent="0.55" />
 
         <!-- TIMER START GUIDELINE : diminue ce pourcentage pour déplacer la base du timer vers la gauche, augmente-le pour la déplacer vers la droite -->
         <androidx.constraintlayout.widget.Guideline

@@ -46,6 +46,22 @@ data class ProgramItem(
     val sortOrder: Int = 0
 )
 
+data class HappyHourAnnouncement(
+    val id: String,
+    val startedAt: String?,
+    val expiresAt: String?,
+    val offer: String?,
+    val message: String?
+)
+
+data class SoundboxEvent(
+    val id: String,
+    val type: String, // "klaxon" | "sifflet" | "cheer" | "goal"
+    val asset: String?,
+    val startedAt: String?,
+    val expiresAt: String?
+)
+
 data class PreMatch(
     val enabled: Boolean,
     val kickoffAt: String?,
@@ -81,7 +97,9 @@ data class CocotteState(
     val bannerMessage: String? = null,
     val spotify: SpotifyState? = null,
     val preMatch: PreMatch? = null,
-    val drinks: List<Drink> = emptyList()
+    val drinks: List<Drink> = emptyList(),
+    val happyHourAnnouncement: HappyHourAnnouncement? = null,
+    val soundboxEvent: SoundboxEvent? = null
 ) {
     companion object {
         private const val TAG = "CocotteState"
@@ -140,6 +158,28 @@ data class CocotteState(
                 }
             }
 
+            val hhAnnouncementJson = json.optJSONObject("happyHourAnnouncement")
+            val hhAnnouncement = hhAnnouncementJson?.let {
+                HappyHourAnnouncement(
+                    id = it.optString("id", ""),
+                    startedAt = it.optString("startedAt", "").takeIf { s -> s != "" && s != "null" },
+                    expiresAt = it.optString("expiresAt", "").takeIf { s -> s != "" && s != "null" },
+                    offer = it.optString("offer", "").takeIf { s -> s != "" && s != "null" },
+                    message = it.optString("message", "").takeIf { s -> s != "" && s != "null" }
+                ).takeIf { event -> event.id.isNotBlank() }
+            }
+
+            val soundboxEventJson = json.optJSONObject("soundboxEvent")
+            val soundboxEvent = soundboxEventJson?.let {
+                SoundboxEvent(
+                    id = it.optString("id", ""),
+                    type = it.optString("type", ""),
+                    asset = it.optString("asset", "").takeIf { s -> s != "" && s != "null" },
+                    startedAt = it.optString("startedAt", "").takeIf { s -> s != "" && s != "null" },
+                    expiresAt = it.optString("expiresAt", "").takeIf { s -> s != "" && s != "null" }
+                ).takeIf { event -> event.id.isNotBlank() }
+            }
+
             val spotifyState = spotifyJson?.let {
                 SpotifyState(
                     status = it.optString("status", "not_configured"),
@@ -189,7 +229,9 @@ data class CocotteState(
                     homeFlag = preMatchJson?.optString("homeFlag", "").takeIf { it != "" && it != "null" },
                     awayFlag = preMatchJson?.optString("awayFlag", "").takeIf { it != "" && it != "null" }
                 ),
-                drinks = drinks
+                drinks = drinks,
+                happyHourAnnouncement = hhAnnouncement,
+                soundboxEvent = soundboxEvent
             )
         }
     }
